@@ -1,0 +1,23 @@
+# VS Code / local workspace
+.vscode/
+*.code-workspace
+
+# MO2 metadata
+meta.ini
+
+# Local Papyrus project/build configuration
+*.ppj
+
+# Compiled Papyrus output
+Scripts/*.pex
+
+# Build / packaging artifacts
+*.bsa
+*.zip
+*.7z
+*.rar
+
+# Logs / temp
+*.log
+*.tmp
+*.bak

@@ -7,6 +7,14 @@ Int[] PendingHeads
 Float[] PromotionDates
 Int[] VisibleHeads
 
+; Fill with the six placed references in WhiterunExterior13, not their bases.
+ObjectReference Property WhiterunPike01Installed Auto
+ObjectReference Property WhiterunPike02Installed Auto
+ObjectReference Property WhiterunPike03Installed Auto
+ObjectReference Property WhiterunHead01 Auto
+ObjectReference Property WhiterunHead02 Auto
+ObjectReference Property WhiterunHead03 Auto
+
 Event OnInit()
     Debug.Trace("[BTOOTJ] Initialized!")
     EnsureHeadState()
@@ -118,9 +126,57 @@ Function PromoteDueHeads(float afCurrentDay)
             PromotionDates[holdIndex] = 0.0
             Debug.Trace("[BTOOTJ] Promoted pending head(s) for " + GetHoldLabel(holdIndex) + ": " + promotedHeads)
             LogHeadCounts(holdIndex)
+            If holdIndex == 0
+                RefreshWhiterunDisplay()
+            EndIf
         EndIf
         holdIndex = holdIndex + 1
     EndWhile
+EndFunction
+
+Function RefreshWhiterunDisplay()
+    If !EnsureHeadState()
+        Return
+    EndIf
+    int visibleCount = VisibleHeads[0]
+    Debug.Trace("[BTOOTJ] Refreshing Whiterun display: visible heads=" + visibleCount)
+    ; Avoid a partially updated scene when CK reference wiring is incomplete.
+    If !WhiterunPike01Installed || !WhiterunPike02Installed || !WhiterunPike03Installed || !WhiterunHead01 || !WhiterunHead02 || !WhiterunHead03
+        Debug.Trace("[BTOOTJ] Whiterun display refresh skipped: fill all six placed-reference properties")
+        Return
+    EndIf
+
+    SetWhiterunDisplaySlot(WhiterunPike01Installed, WhiterunHead01, visibleCount >= 1)
+    SetWhiterunDisplaySlot(WhiterunPike02Installed, WhiterunHead02, visibleCount >= 2)
+    SetWhiterunDisplaySlot(WhiterunPike03Installed, WhiterunHead03, visibleCount >= 3)
+    ; Cap only the scene's slot count, never the persistent logical count.
+    int enabledSlots = visibleCount
+    If enabledSlots > 3
+        enabledSlots = 3
+    ElseIf enabledSlots < 0
+        enabledSlots = 0
+    EndIf
+    Debug.Trace("[BTOOTJ] Whiterun display slots enabled=" + enabledSlots)
+EndFunction
+
+Function SetWhiterunDisplaySlot(ObjectReference akPike, ObjectReference akHead, Bool abEnabled)
+    ; NoWait changes enable state without waiting for exterior 3D to load.
+    ; References must be persistent and filled through the core quest properties.
+    If abEnabled
+        If akPike.IsDisabled()
+            akPike.EnableNoWait()
+        EndIf
+        If akHead.IsDisabled()
+            akHead.EnableNoWait()
+        EndIf
+    Else
+        If !akHead.IsDisabled()
+            akHead.DisableNoWait()
+        EndIf
+        If !akPike.IsDisabled()
+            akPike.DisableNoWait()
+        EndIf
+    EndIf
 EndFunction
 
 Function LogHeadCounts(int aiHoldIndex)

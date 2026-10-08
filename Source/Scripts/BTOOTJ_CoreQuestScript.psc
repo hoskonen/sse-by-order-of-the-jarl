@@ -7,13 +7,17 @@ Int[] PendingHeads
 Float[] PromotionDates
 Int[] VisibleHeads
 
-; Fill with the six placed references in WhiterunExterior13, not their bases.
+; Fill with placed Whiterun display references, not their base objects.
 ObjectReference Property WhiterunPike01Installed Auto
 ObjectReference Property WhiterunPike02Installed Auto
 ObjectReference Property WhiterunPike03Installed Auto
 ObjectReference Property WhiterunHead01 Auto
 ObjectReference Property WhiterunHead02 Auto
 ObjectReference Property WhiterunHead03 Auto
+ObjectReference Property WhiterunPike01Material Auto
+ObjectReference Property WhiterunPike02Material Auto
+ObjectReference Property WhiterunPike03Material Auto
+ObjectReference Property WhiterunMaterialCrate Auto
 
 Event OnInit()
     Debug.Trace("[BTOOTJ] Initialized!")
@@ -134,6 +138,25 @@ Function PromoteDueHeads(float afCurrentDay)
     EndWhile
 EndFunction
 
+; Development console entry point only. Never called by normal bounty gameplay.
+; Pending counts, deadlines, and the existing game-time registration are untouched.
+Function DebugSetWhiterunVisibleHeads(Int aiCount)
+    If !EnsureHeadState()
+        Debug.Trace("[BTOOTJ] DEV Whiterun display test skipped: head state unavailable")
+        Return
+    EndIf
+    If aiCount < 0
+        aiCount = 0
+    EndIf
+    VisibleHeads[0] = aiCount
+    RefreshWhiterunDisplay()
+    int displayedSlotTarget = aiCount
+    If displayedSlotTarget > 3
+        displayedSlotTarget = 3
+    EndIf
+    Debug.Trace("[BTOOTJ] DEV Whiterun logical visible heads=" + VisibleHeads[0] + " displayed slot target=" + displayedSlotTarget)
+EndFunction
+
 Function RefreshWhiterunDisplay()
     If !EnsureHeadState()
         Return
@@ -141,14 +164,16 @@ Function RefreshWhiterunDisplay()
     int visibleCount = VisibleHeads[0]
     Debug.Trace("[BTOOTJ] Refreshing Whiterun display: visible heads=" + visibleCount)
     ; Avoid a partially updated scene when CK reference wiring is incomplete.
-    If !WhiterunPike01Installed || !WhiterunPike02Installed || !WhiterunPike03Installed || !WhiterunHead01 || !WhiterunHead02 || !WhiterunHead03
-        Debug.Trace("[BTOOTJ] Whiterun display refresh skipped: fill all six placed-reference properties")
+    If !WhiterunDisplayReferencesReady()
         Return
     EndIf
 
-    SetWhiterunDisplaySlot(WhiterunPike01Installed, WhiterunHead01, visibleCount >= 1)
-    SetWhiterunDisplaySlot(WhiterunPike02Installed, WhiterunHead02, visibleCount >= 2)
-    SetWhiterunDisplaySlot(WhiterunPike03Installed, WhiterunHead03, visibleCount >= 3)
+    ; Inferred for now; construction reconciliation is separate from head slots
+    ; so a future independent lifecycle can supply the built state here.
+    Bool isBuilt = visibleCount > 0
+    ReconcileWhiterunConstruction(isBuilt)
+    ReconcileWhiterunHeads(visibleCount)
+    Debug.Trace("[BTOOTJ] Whiterun display built=" + isBuilt)
     ; Cap only the scene's slot count, never the persistent logical count.
     int enabledSlots = visibleCount
     If enabledSlots > 3
@@ -156,25 +181,59 @@ Function RefreshWhiterunDisplay()
     ElseIf enabledSlots < 0
         enabledSlots = 0
     EndIf
-    Debug.Trace("[BTOOTJ] Whiterun display slots enabled=" + enabledSlots)
+    Debug.Trace("[BTOOTJ] Whiterun display head slots enabled=" + enabledSlots)
 EndFunction
 
-Function SetWhiterunDisplaySlot(ObjectReference akPike, ObjectReference akHead, Bool abEnabled)
+Bool Function WhiterunDisplayReferencesReady()
+    If !WhiterunPike01Installed || !WhiterunPike02Installed || !WhiterunPike03Installed
+        Debug.Trace("[BTOOTJ] Whiterun display refresh skipped: installed pike properties are incomplete")
+        Return False
+    EndIf
+    If !WhiterunHead01 || !WhiterunHead02 || !WhiterunHead03
+        Debug.Trace("[BTOOTJ] Whiterun display refresh skipped: head properties are incomplete")
+        Return False
+    EndIf
+    If !WhiterunPike01Material || !WhiterunPike02Material || !WhiterunPike03Material
+        Debug.Trace("[BTOOTJ] Whiterun display refresh skipped: material pike properties are incomplete")
+        Return False
+    EndIf
+    If !WhiterunMaterialCrate
+        Debug.Trace("[BTOOTJ] Whiterun display refresh skipped: WhiterunMaterialCrate is unfilled")
+        Return False
+    EndIf
+    Return True
+EndFunction
+
+Function ReconcileWhiterunConstruction(Bool abBuilt)
+    SetWhiterunReferenceEnabled(WhiterunPike01Installed, abBuilt)
+    SetWhiterunReferenceEnabled(WhiterunPike02Installed, abBuilt)
+    SetWhiterunReferenceEnabled(WhiterunPike03Installed, abBuilt)
+    SetWhiterunReferenceEnabled(WhiterunPike01Material, !abBuilt)
+    SetWhiterunReferenceEnabled(WhiterunPike02Material, !abBuilt)
+    SetWhiterunReferenceEnabled(WhiterunPike03Material, !abBuilt)
+    SetWhiterunReferenceEnabled(WhiterunMaterialCrate, !abBuilt)
+EndFunction
+
+Function ReconcileWhiterunHeads(Int aiVisibleCount)
+    SetWhiterunReferenceEnabled(WhiterunHead01, aiVisibleCount >= 1)
+    SetWhiterunReferenceEnabled(WhiterunHead02, aiVisibleCount >= 2)
+    SetWhiterunReferenceEnabled(WhiterunHead03, aiVisibleCount >= 3)
+EndFunction
+
+Function SetWhiterunReferenceEnabled(ObjectReference akReference, Bool abEnabled)
+    If !akReference
+        Debug.Trace("[BTOOTJ] Whiterun reference update skipped: missing placed reference")
+        Return
+    EndIf
     ; NoWait changes enable state without waiting for exterior 3D to load.
     ; References must be persistent and filled through the core quest properties.
     If abEnabled
-        If akPike.IsDisabled()
-            akPike.EnableNoWait()
-        EndIf
-        If akHead.IsDisabled()
-            akHead.EnableNoWait()
+        If akReference.IsDisabled()
+            akReference.EnableNoWait()
         EndIf
     Else
-        If !akHead.IsDisabled()
-            akHead.DisableNoWait()
-        EndIf
-        If !akPike.IsDisabled()
-            akPike.DisableNoWait()
+        If !akReference.IsDisabled()
+            akReference.DisableNoWait()
         EndIf
     EndIf
 EndFunction

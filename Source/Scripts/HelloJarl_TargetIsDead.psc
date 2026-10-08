@@ -5,6 +5,7 @@ int Property stage = 200 Auto
 
 ;BEGIN FRAGMENT Fragment_0
 Function Fragment_0(ObjectReference akSpeakerRef)
+Debug.Trace("[BTOOTJ] HelloJarl_TargetIsDead.Fragment_0 entered (override build 2026-10-07)")
 ;Debug.Notification("TargetIsDead")
 Actor akSpeaker = akSpeakerRef as Actor
 ;BEGIN CODE
@@ -39,7 +40,9 @@ If bountyQuest && banditBountyQuest && bountyQuest == banditBountyQuest
     EndIf
     If headOwner && headOwner == Game.GetPlayer()
         If holdLocation
-            BTOOTJ_CoreQuestScript coreQuest = Game.GetFormFromFile(0x00000801, "ByTheOrderOfTheJarl.esp") as BTOOTJ_CoreQuestScript
+            Form coreQuestForm = Game.GetFormFromFile(0x00000801, "ByTheOrderOfTheJarl.esp")
+            BTOOTJ_CoreQuestScript coreQuest = coreQuestForm as BTOOTJ_CoreQuestScript
+            Debug.Trace("[BTOOTJ] BTOOTJ core lookup: local FormID=00000801 form=" + coreQuestForm + " script=" + coreQuest)
             If coreQuest
                 coreQuest.RegisterBanditHead(holdLocation)
             Else

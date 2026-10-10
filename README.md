@@ -10,6 +10,8 @@ Haafingar, Eastmarch, Rift, Reach. The first pending head sets next-day 06:00;
 later heads join that batch. One game-time callback targets the earliest batch.
 Whiterun promotion constructs all three installed pikes together on the first
 visible head and hides the material pikes/crate. Heads fill up to three slots.
+The notice, dagger, finished toolbox, hammer, and three bloody rags share this
+built state and are enabled together with the installation.
 Visible counts above three are retained. At zero, installed pikes and heads are
 disabled and the material pikes/crate are enabled. Banners remain untouched.
 
@@ -38,15 +40,25 @@ ObjectReference properties to the placed references in WhiterunExterior13:
 | WhiterunPike02Material | BTOOTJ_Whiterun_Pike02_Material |
 | WhiterunPike03Material | BTOOTJ_Whiterun_Pike03_Material |
 | WhiterunMaterialCrate | CommonCrate02 placed REFR, ByTheOrderOfTheJarl.esp local ID 00000D6F |
+| WhiterunNotice | BTOOTJ_Whiterun_Notice |
+| WhiterunNoticeDagger | BTOOTJ_Whiterun_Notice_Dagger |
+| WhiterunToolsAfter | BTOOTJ_Whiterun_Tools_After |
+| WhiterunRag01 | BTOOTJ_Whiterun_Rag01 |
+| WhiterunRag02 | BTOOTJ_Whiterun_Rag02 |
+| WhiterunRag03 | BTOOTJ_Whiterun_Rag03 |
+| WhiterunToolsHammer | BTOOTJ_Whiterun_Tools_Hammer |
 
 Select the placed REFRs, not the base objects. Keep Initially Disabled checked
 for installed pikes and heads, and unchecked for material pikes and the crate.
+Keep the seven finished-scene references initially disabled. The pre-build
+WhiterunMaterialCrate assignment remains the existing pre-build toolbox/crate;
+WhiterunToolsAfter must point to the separate finished toolbox reference.
 The crate has no reference Editor ID; its base is CommonCrate02 (Skyrim.esm
 000DAE82), and its position is approximately X=15154.29, Y=-7329.56, Z=-4354.24
 in WhiterunExterior13. The runtime load-order prefix is not part of its local ID.
 The four material references are currently non-persistent. CK assignment of
 placed-reference properties normally makes the refs persistent. After saving,
-verify Persistent on all ten; if CK did not set it,
+verify Persistent on all seventeen; if CK did not set it,
 set it explicitly for reliable quest access while the exterior cell is unloaded.
 No persistence flags or ESP records were changed by this implementation.
 See https://wiki.beyondskyrim.org/wiki/Arcane_University:Scripting_Best_Practices
@@ -56,7 +68,8 @@ RefreshWhiterunDisplay() separately calls ReconcileWhiterunConstruction() and
 ReconcileWhiterunHeads(). Built state is currently inferred from VisibleHeads[0]
 being positive, with no additional persistent lifecycle state. All three pikes
 share the built state; each head uses its own visible-count threshold.
-EnableNoWait/DisableNoWait avoid waiting for exterior 3D. If any of the ten
+The seven finished-scene props use that same built state, never head thresholds.
+EnableNoWait/DisableNoWait avoid waiting for exterior 3D. If any of the seventeen
 required properties is empty, the entire refresh is skipped with a specific
 trace before any scene reference is changed. Banners are not controlled.
 
@@ -84,7 +97,7 @@ logged only after incrementing and reading back the pending count.
 6. Before the first promotion, expect visible 0 and all installed pikes/heads
    disabled on a fresh game, with material pikes/crate enabled. After the first
    Whiterun promotion all three installed pikes are enabled and all materials
-   disabled. Further promotions add heads only. A fourth head must log visible
+   disabled, and all seven finished-scene props enabled. Further promotions add heads only. A fourth head must log visible
    4 and head slots enabled 3.
 7. Let a promotion occur inside an interior or away from Whiterun, then return
    normally to WhiterunExterior13. Verify the correct pairs appear, and save/load
@@ -120,7 +133,7 @@ Self is the quest fragment's owning Quest, so casting it accesses the existing
 BTOOTJ_CoreQuestScript attachment without another property or a FormID lookup.
 Compile the fragments through CK, let CK create/bind the generated quest
 fragment script, save the ESP, and retain its generated PEX in this mod. Verify
-the original core script attachment and all ten display properties remain filled.
+the original core script attachment and all seventeen display properties remain filled.
 
 Use a fresh development game after saving the CK changes. Test the initial
 zero-head scene before running any stages, then enter these commands in order:
@@ -133,11 +146,13 @@ setstage BTOOTJ_CoreQuest 904
 ```
 
 Expect all three installed pikes enabled and all material props disabled at each
-stage. Enabled heads are 1/2/3/3 respectively, with logical count 4 at stage 904.
+stage. All seven finished-scene props are enabled at every stage. Enabled heads
+are 1/2/3/3 respectively, with logical count 4 at stage 904. Before the first
+displayed head, finished-scene props remain disabled and pre-build props enabled.
 Reload the pre-test save when repeating the stage sequence; do not reset or
 restart the core quest to rerun this display test. These stage fragments only
 invoke the existing debug function and are never called by normal gameplay.
-The refresh logs built state and head-slot requests when all ten properties are wired, or a
+The refresh logs built state and head-slot requests when all seventeen properties are wired, or a
 skip when wiring is incomplete. The development trace also reports the logical
 count and slot target; it is not proof that unloaded 3D has appeared yet.
 

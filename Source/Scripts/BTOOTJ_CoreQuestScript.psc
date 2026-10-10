@@ -18,6 +18,14 @@ ObjectReference Property WhiterunPike01Material Auto
 ObjectReference Property WhiterunPike02Material Auto
 ObjectReference Property WhiterunPike03Material Auto
 ObjectReference Property WhiterunMaterialCrate Auto
+; Built-state scenery, controlled together with the installed pikes.
+ObjectReference Property WhiterunNotice Auto
+ObjectReference Property WhiterunNoticeDagger Auto
+ObjectReference Property WhiterunToolsAfter Auto
+ObjectReference Property WhiterunRag01 Auto
+ObjectReference Property WhiterunRag02 Auto
+ObjectReference Property WhiterunRag03 Auto
+ObjectReference Property WhiterunToolsHammer Auto
 
 Event OnInit()
     Debug.Trace("[BTOOTJ] Initialized!")
@@ -173,7 +181,7 @@ Function RefreshWhiterunDisplay()
     Bool isBuilt = visibleCount > 0
     ReconcileWhiterunConstruction(isBuilt)
     ReconcileWhiterunHeads(visibleCount)
-    Debug.Trace("[BTOOTJ] Whiterun display built=" + isBuilt)
+    Debug.Trace("[BTOOTJ] Whiterun construction state: built=" + isBuilt)
     ; Cap only the scene's slot count, never the persistent logical count.
     int enabledSlots = visibleCount
     If enabledSlots > 3
@@ -181,7 +189,7 @@ Function RefreshWhiterunDisplay()
     ElseIf enabledSlots < 0
         enabledSlots = 0
     EndIf
-    Debug.Trace("[BTOOTJ] Whiterun display head slots enabled=" + enabledSlots)
+    Debug.Trace("[BTOOTJ] Whiterun head slots enabled=" + enabledSlots)
 EndFunction
 
 Bool Function WhiterunDisplayReferencesReady()
@@ -201,6 +209,38 @@ Bool Function WhiterunDisplayReferencesReady()
         Debug.Trace("[BTOOTJ] Whiterun display refresh skipped: WhiterunMaterialCrate is unfilled")
         Return False
     EndIf
+    Return WhiterunFinishedSceneReferencesReady()
+EndFunction
+
+Bool Function WhiterunFinishedSceneReferencesReady()
+    If !WhiterunNotice
+        Debug.Trace("[BTOOTJ] Whiterun display refresh skipped: WhiterunNotice is unfilled")
+        Return False
+    EndIf
+    If !WhiterunNoticeDagger
+        Debug.Trace("[BTOOTJ] Whiterun display refresh skipped: WhiterunNoticeDagger is unfilled")
+        Return False
+    EndIf
+    If !WhiterunToolsAfter
+        Debug.Trace("[BTOOTJ] Whiterun display refresh skipped: WhiterunToolsAfter is unfilled")
+        Return False
+    EndIf
+    If !WhiterunRag01
+        Debug.Trace("[BTOOTJ] Whiterun display refresh skipped: WhiterunRag01 is unfilled")
+        Return False
+    EndIf
+    If !WhiterunRag02
+        Debug.Trace("[BTOOTJ] Whiterun display refresh skipped: WhiterunRag02 is unfilled")
+        Return False
+    EndIf
+    If !WhiterunRag03
+        Debug.Trace("[BTOOTJ] Whiterun display refresh skipped: WhiterunRag03 is unfilled")
+        Return False
+    EndIf
+    If !WhiterunToolsHammer
+        Debug.Trace("[BTOOTJ] Whiterun display refresh skipped: WhiterunToolsHammer is unfilled")
+        Return False
+    EndIf
     Return True
 EndFunction
 
@@ -212,6 +252,13 @@ Function ReconcileWhiterunConstruction(Bool abBuilt)
     SetWhiterunReferenceEnabled(WhiterunPike02Material, !abBuilt)
     SetWhiterunReferenceEnabled(WhiterunPike03Material, !abBuilt)
     SetWhiterunReferenceEnabled(WhiterunMaterialCrate, !abBuilt)
+    SetWhiterunReferenceEnabled(WhiterunNotice, abBuilt)
+    SetWhiterunReferenceEnabled(WhiterunNoticeDagger, abBuilt)
+    SetWhiterunReferenceEnabled(WhiterunToolsAfter, abBuilt)
+    SetWhiterunReferenceEnabled(WhiterunToolsHammer, abBuilt)
+    SetWhiterunReferenceEnabled(WhiterunRag01, abBuilt)
+    SetWhiterunReferenceEnabled(WhiterunRag02, abBuilt)
+    SetWhiterunReferenceEnabled(WhiterunRag03, abBuilt)
 EndFunction
 
 Function ReconcileWhiterunHeads(Int aiVisibleCount)
